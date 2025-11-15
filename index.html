@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Случайный 100x Переводчик</title>
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        background-color: #04170e;
+        color: #e0f7f7;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        min-height: 100vh;
+        margin: 0;
+        padding: 20px;
+        transition: background 0.5s ease;
+    }
+    h1 {
+        margin-bottom: 60px;
+        color: #00ffff;
+        transition: color 0.5s ease;
+        text-align: center;
+    }
+    select {
+        position: absolute;
+        left: 20px;
+        top: 80px; /* ниже заголовка */
+        padding: 8px 12px;
+        border-radius: 8px;
+        border: none;
+        background-color: #006666;
+        color: #e0f7f7;
+        font-size: 16px;
+        transition: background 0.3s, transform 0.3s;
+    }
+    select:hover {
+        background-color: #008080;
+        transform: scale(1.05);
+    }
+    textarea {
+        width: 90%;
+        max-width: 600px;
+        height: 150px;
+        padding: 10px;
+        border-radius: 8px;
+        border: none;
+        resize: none;
+        background-color: #006666;
+        color: #e0f7f7;
+        font-size: 16px;
+        margin-bottom: 15px;
+        transition: background 0.3s, transform 0.3s;
+    }
+    textarea:focus {
+        background-color: #008080;
+        transform: scale(1.02);
+        outline: none;
+    }
+    button {
+        padding: 10px 20px;
+        border: none;
+        border-radius: 8px;
+        background-color: #00b3b3;
+        color: #004d4d;
+        cursor: pointer;
+        transition: background 0.3s, transform 0.3s;
+    }
+    button:hover {
+        background-color: #009999;
+        transform: scale(1.05);
+    }
+    #result {
+        margin-top: 20px;
+        width: 90%;
+        max-width: 600px;
+        padding: 15px;
+        background-color: #006666;
+        border-radius: 8px;
+        min-height: 100px;
+        white-space: pre-wrap;
+        transition: background 0.3s, transform 0.3s;
+    }
+</style>
+</head>
+<body>
+<h1>Случайный 100x Переводчик</h1>
+<select id="finalLang">
+    <option value="en">Английский</option>
+    <option value="ru" selected>Русский</option>
+    <option value="fr">Французский</option>
+    <option value="de">Немецкий</option>
+    <option value="es">Испанский</option>
+    <option value="it">Итальянский</option>
+    <option value="ja">Японский</option>
+    <option value="ko">Корейский</option>
+    <option value="zh-CN">Китайский</option>
+    <option value="ar">Арабский</option>
+</select>
+
+<textarea id="inputText" placeholder="Введите текст для перевода..."></textarea>
+<button onclick="translateRandom100()">Перевести 100 раз</button>
+<div id="result"></div>
+
+<script>
+const allLanguages = ['en','ru','fr','de','es','it','ja','ko','zh-CN','ar'];
+
+async function translateText(text, source, target) {
+    try {
+        const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=${source}&tl=${target}&dt=t&q=${encodeURIComponent(text)}`;
+        const response = await fetch(url);
+        const data = await response.json();
+        return data[0].map(item => item[0]).join('');
+    } catch(e) {
+        console.error('Ошибка перевода:', e);
+        return text;
+    }
+}
+
+function getRandomLanguage(exclude) {
+    const langs = allLanguages.filter(lang => lang !== exclude);
+    return langs[Math.floor(Math.random() * langs.length)];
+}
+
+async function translateRandom100() {
+    let text = document.getElementById('inputText').value;
+    const resultDiv = document.getElementById('result');
+    const finalLang = document.getElementById('finalLang').value;
+
+    if(!text.trim()) {
+        resultDiv.textContent = "Введите текст!";
+        return;
+    }
+
+    resultDiv.textContent = "Переводим... Пожалуйста, подождите.";
+
+    let currentLang = 'en';
+    for(let i = 0; i < 100; i++) {
+        let nextLang = getRandomLanguage(currentLang);
+        text = await translateText(text, currentLang, nextLang);
+        currentLang = nextLang;
+        resultDiv.textContent = `Итерация ${i+1}:\n${text}`;
+    }
+
+    if(currentLang !== finalLang) {
+        text = await translateText(text, currentLang, finalLang);
+    }
+
+    resultDiv.textContent = `Результат после 100 случайных переводов:\n${text}`;
+}
+</script>
+</body>
+</html>
